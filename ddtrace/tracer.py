@@ -287,7 +287,7 @@ class Tracer(object):
         if dogstatsd_url is not None:
             dogstatsd_kwargs = _parse_dogstatsd_url(dogstatsd_url)
             self.log.debug('Connecting to DogStatsd(%s)', dogstatsd_url)
-            self._dogstatsd_client = DogStatsd(**dogstatsd_kwargs)
+            self._dogstatsd_client = None # DogStatsd(**dogstatsd_kwargs)
 
         if writer:
             self.writer = writer
@@ -525,7 +525,7 @@ class Tracer(object):
             for k, v in RuntimeTags()
         ]
         self.log.debug('Updating constant tags %s', tags)
-        self._dogstatsd_client.constant_tags = tags
+        # self._dogstatsd_client.constant_tags = tags
 
     def _start_runtime_worker(self):
         self._runtime_worker = RuntimeWorker(self._dogstatsd_client, self._RUNTIME_METRICS_INTERVAL)

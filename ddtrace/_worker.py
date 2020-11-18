@@ -20,7 +20,7 @@ class PeriodicWorkerThread(object):
 
     _DEFAULT_INTERVAL = 1.0
 
-    def __init__(self, interval=_DEFAULT_INTERVAL, exit_timeout=None, name=None, daemon=True):
+    def __init__(self, interval=_DEFAULT_INTERVAL, exit_timeout=None, name=None, daemon=False):
         """Create a new worker thread that runs a function periodically.
 
         :param interval: The interval in seconds to wait between calls to `run_periodic`.
@@ -35,17 +35,8 @@ class PeriodicWorkerThread(object):
         self.started = False
         self.interval = interval
         self.exit_timeout = exit_timeout
-        atexit.register(self._atexit)
-
-    def _atexit(self):
-        self.stop()
-        if self.exit_timeout is not None and self.started:
-            key = 'ctrl-break' if os.name == 'nt' else 'ctrl-c'
-            _LOG.debug(
-                'Waiting %d seconds for %s to finish. Hit %s to quit.',
-                self.exit_timeout, self._thread.name, key,
-            )
-            self.join(self.exit_timeout)
+        self._thread_join = self._thread.join
+        self._thread.join = self.join
 
     def start(self):
         """Start the periodic worker."""
@@ -62,10 +53,15 @@ class PeriodicWorkerThread(object):
         return self._thread.is_alive()
 
     def join(self, timeout=None):
-        return self._thread.join(timeout)
+        _LOG.debug('Joining %s thread', self._thread.name)
+        self.stop()
+        return self._thread_join(timeout)
 
     def _target(self):
         while not self._stop.wait(self.interval):
+            _LOG.debug('%s thread is_alive=%s', self._thread.name, self.is_alive())
+            if not self.is_alive():
+                return
             self.run_periodic()
         self._on_shutdown()
 

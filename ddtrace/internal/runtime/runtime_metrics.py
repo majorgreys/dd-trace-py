@@ -62,9 +62,10 @@ class RuntimeWorker(_worker.PeriodicWorkerThread):
     def __init__(self, statsd_client, flush_interval=FLUSH_INTERVAL):
         super(RuntimeWorker, self).__init__(interval=flush_interval, name=self.__class__.__name__)
         self._statsd_client = statsd_client
-        self._runtime_metrics = RuntimeMetrics()
+        # self._runtime_metrics = RuntimeMetrics()
 
     def flush(self):
+        return
         with self._statsd_client:
             for key, value in self._runtime_metrics:
                 log.debug("Writing metric %s:%s", key, value)
