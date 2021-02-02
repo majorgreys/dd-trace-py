@@ -102,6 +102,7 @@ class RateByServiceSampler(BaseSampler, BasePrioritySampler):
     def update_rate_by_service_sample_rates(self, rate_by_service):
         new_by_service_samplers = self._get_new_by_service_sampler()
         for key, sample_rate in iteritems(rate_by_service):
+            log.debug("updating rate for key=%s to %s%%", key, sample_rate)
             new_by_service_samplers[key] = RateSampler(sample_rate)
 
         self._by_service_samplers = new_by_service_samplers
