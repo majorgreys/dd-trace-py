@@ -3,8 +3,8 @@ import sys
 from pylons import config
 from webob import Request
 
+from .. import trace_utils
 from ...compat import reraise
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import http
@@ -47,11 +47,7 @@ class PylonsTraceMiddleware(object):
             # Set the service in tracer.trace() as priority sampling requires it to be
             # set as early as possible when different services share one single agent.
 
-            # set analytics sample rate with global config enabled
-            span.set_tag(
-                ANALYTICS_SAMPLE_RATE_KEY,
-                ddconfig.pylons.get_analytics_sample_rate(use_global_config=True)
-            )
+            trace_utils.set_analytics_sample_rate(span, ddconfig.pylons)
 
             if not span.sampled:
                 return self.app(environ, start_response)

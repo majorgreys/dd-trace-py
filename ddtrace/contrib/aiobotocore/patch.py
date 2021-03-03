@@ -12,8 +12,8 @@ except ImportError:
     # aiobotocore>=0.11.0
     from aiobotocore._endpoint_helpers import ClientResponseContentProxy
 
+from .. import trace_utils
 from ...compat import PYTHON_VERSION_INFO
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import aws
@@ -135,10 +135,6 @@ def _wrapped_api_call(original_func, instance, args, kwargs):
         if request_id2:
             span.set_tag('aws.requestid2', request_id2)
 
-        # set analytics sample rate
-        span.set_tag(
-            ANALYTICS_SAMPLE_RATE_KEY,
-            config.aiobotocore.get_analytics_sample_rate()
-        )
+        trace_utils.set_analytics_sample_rate(span, config.aiobotocore)
 
         return result

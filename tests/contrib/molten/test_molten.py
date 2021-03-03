@@ -99,17 +99,18 @@ class TestMolten(TracerTestCase):
                 We expect the root span to have the appropriate tag
         """
         with self.override_global_config(dict(analytics_enabled=True)):
-            response = molten_client()
-            self.assertEqual(response.status_code, 200)
-            # TestResponse from TestClient is wrapper around Response so we must
-            # access data property
-            self.assertEqual(response.data, '"Hello 24 year old named Jim!"')
+            with self.override_config("molten", dict()):
+                response = molten_client()
+                self.assertEqual(response.status_code, 200)
+                # TestResponse from TestClient is wrapper around Response so we must
+                # access data property
+                self.assertEqual(response.data, '"Hello 24 year old named Jim!"')
 
-            root_span = self.get_root_span()
-            root_span.assert_matches(
-                name="molten.request",
-                metrics={ANALYTICS_SAMPLE_RATE_KEY: 1.0},
-            )
+                root_span = self.get_root_span()
+                root_span.assert_matches(
+                    name="molten.request",
+                    metrics={ANALYTICS_SAMPLE_RATE_KEY: 1.0},
+                )
 
     def test_analytics_global_on_integration_on(self):
         """

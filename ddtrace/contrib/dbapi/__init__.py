@@ -2,7 +2,7 @@
 Generic dbapi tracing code.
 """
 
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
+from .. import trace_utils
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import sql
@@ -13,8 +13,6 @@ from ...utils.formats import asbool
 from ...utils.formats import get_env
 from ...vendor import six
 from ...vendor import wrapt
-from ..trace_utils import ext_service
-from ..trace_utils import iswrapped
 
 
 log = get_logger(__name__)
@@ -54,7 +52,7 @@ class TracedCursor(wrapt.ObjectProxy):
         cfg = _get_config(self._self_config)
 
         with pin.tracer.trace(
-            name, service=ext_service(pin, cfg), resource=resource, span_type=SpanTypes.SQL
+            name, service=trace_utils.ext_service(pin, cfg), resource=resource, span_type=SpanTypes.SQL
         ) as s:
             if measured:
                 s.set_tag(SPAN_MEASURED_KEY)
@@ -65,10 +63,7 @@ class TracedCursor(wrapt.ObjectProxy):
 
             # set analytics sample rate if enabled but only for non-FetchTracedCursor
             if not isinstance(self, FetchTracedCursor):
-                s.set_tag(
-                    ANALYTICS_SAMPLE_RATE_KEY,
-                    config.dbapi2.get_analytics_sample_rate()
-                )
+                trace_utils.set_analytics_sample_rate(s, config.dbapi2)
 
             try:
                 return method(*args, **kwargs)
@@ -214,7 +209,7 @@ class TracedConnection(wrapt.ObjectProxy):
                 return r
         elif hasattr(r, "execute"):
             # r is Cursor-like.
-            if iswrapped(r):
+            if trace_utils.iswrapped(r):
                 return r
             else:
                 pin = Pin.get_from(self)
@@ -233,7 +228,7 @@ class TracedConnection(wrapt.ObjectProxy):
             return method(*args, **kwargs)
         cfg = _get_config(self._self_config)
 
-        with pin.tracer.trace(name, service=ext_service(pin, cfg)) as s:
+        with pin.tracer.trace(name, service=trace_utils.ext_service(pin, cfg)) as s:
             s.set_tags(pin.tags)
             s.set_tags(extra_tags)
 

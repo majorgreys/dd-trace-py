@@ -3,7 +3,6 @@ from ddtrace import config
 
 from .. import trace_utils
 from ...compat import parse
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...internal.logger import get_logger
@@ -79,9 +78,9 @@ def _wrap_send(func, instance, args, kwargs):
         # Configure trace search sample rate
         # DEV: analytics enabled on per-session basis
         cfg = config.get_from(instance)
-        analytics_enabled = cfg.get("analytics_enabled")
-        if analytics_enabled:
-            span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, cfg.get("analytics_sample_rate", True))
+        trace_utils.set_analytics_sample_rate_custom(
+            span, cfg.get("analytics_enabled"), cfg.get("analytics_sample_rate")
+        )
 
         # propagate distributed tracing headers
         if cfg.get("distributed_tracing"):

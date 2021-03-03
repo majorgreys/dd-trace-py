@@ -18,7 +18,7 @@ from sqlalchemy.event import listen
 # project
 import ddtrace
 
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
+from .. import trace_utils
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import net as netx
@@ -97,10 +97,7 @@ class EngineTracer(object):
         if not _set_tags_from_url(span, conn.engine.url):
             _set_tags_from_cursor(span, self.vendor, cursor)
 
-        # set analytics sample rate
-        sample_rate = config.sqlalchemy.get_analytics_sample_rate()
-        if sample_rate is not None:
-            span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, sample_rate)
+        trace_utils.set_analytics_sample_rate(span, config.sqlalchemy)
 
     def _after_cur_exec(self, conn, cursor, statement, *args):
         pin = Pin.get_from(self.engine)

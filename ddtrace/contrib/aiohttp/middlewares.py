@@ -2,7 +2,6 @@ import asyncio
 
 from .. import trace_utils
 from ...compat import stringify
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import http
@@ -51,11 +50,9 @@ def trace_middleware(app, handler):
         )
         request_span.set_tag(SPAN_MEASURED_KEY)
 
-        # Configure trace search sample rate
-        # DEV: aiohttp is special case maintains separate configuration from config api
-        analytics_enabled = app[CONFIG_KEY]["analytics_enabled"]
-        if (config.analytics_enabled and analytics_enabled is not False) or analytics_enabled is True:
-            request_span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, app[CONFIG_KEY].get("analytics_sample_rate", True))
+        trace_utils.set_analytics_sample_rate_custom(
+            request_span, app[CONFIG_KEY]["analytics_enabled"], app[CONFIG_KEY].get("analytics_sample_rate")
+        )
 
         # attach the context and the root span to the request; the Context
         # may be freely used by the application code

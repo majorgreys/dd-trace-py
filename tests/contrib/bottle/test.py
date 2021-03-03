@@ -295,9 +295,10 @@ class TraceBottleTest(TracerTestCase):
         self._trace_app(self.tracer)
 
         with self.override_global_config(dict(analytics_enabled=True)):
-            resp = self.app.get("/hi/dougie")
-            assert resp.status_int == 200
-            assert compat.to_unicode(resp.body) == u"hi dougie"
+            with self.override_config("bottle", dict()):
+                resp = self.app.get("/hi/dougie")
+                assert resp.status_int == 200
+                assert compat.to_unicode(resp.body) == u"hi dougie"
 
         root = self.get_root_span()
         root.assert_matches(

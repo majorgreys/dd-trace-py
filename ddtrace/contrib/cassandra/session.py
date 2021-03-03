@@ -6,9 +6,9 @@ import sys
 # 3p
 import cassandra.cluster
 
+from .. import trace_utils
 # project
 from ...compat import stringify
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import cassandra as cassx
@@ -191,11 +191,7 @@ def _start_span_and_set_tags(pin, query, session, cluster):
     _sanitize_query(span, query)
     span.set_tags(_extract_session_metas(session))     # FIXME[matt] do once?
     span.set_tags(_extract_cluster_metas(cluster))
-    # set analytics sample rate if enabled
-    span.set_tag(
-        ANALYTICS_SAMPLE_RATE_KEY,
-        config.cassandra.get_analytics_sample_rate()
-    )
+    trace_utils.set_analytics_sample_rate(span, config.cassandra)
     return span
 
 

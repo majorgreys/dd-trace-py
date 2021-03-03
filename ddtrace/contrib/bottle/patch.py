@@ -6,6 +6,14 @@ from ddtrace.vendor import wrapt
 from .trace import TracePlugin
 
 
+config._add(
+    "bottle",
+    dict(
+        _use_global_config_analytics=True,
+    ),
+)
+
+
 def patch():
     """Patch the bottle.Bottle class"""
     if getattr(bottle, "_datadog_patch", False):

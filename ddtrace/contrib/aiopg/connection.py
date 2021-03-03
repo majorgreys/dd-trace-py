@@ -5,7 +5,7 @@ from aiopg.utils import _ContextManager
 from ddtrace.vendor import wrapt
 
 from .. import dbapi
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
+from .. import trace_utils
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import sql
@@ -37,11 +37,7 @@ class AIOTracedCursor(wrapt.ObjectProxy):
             s.set_tags(pin.tags)
             s.set_tags(extra_tags)
 
-            # set analytics sample rate
-            s.set_tag(
-                ANALYTICS_SAMPLE_RATE_KEY,
-                config.aiopg.get_analytics_sample_rate()
-            )
+            trace_utils.set_analytics_sample_rate(s, config.aiopg)
 
             try:
                 result = yield from method(*args, **kwargs)

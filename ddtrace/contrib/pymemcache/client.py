@@ -11,9 +11,9 @@ from pymemcache.exceptions import MemcacheUnknownError
 # 3p
 from ddtrace.vendor import wrapt
 
+from .. import trace_utils
 from ...compat import reraise
 # project
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import memcached as memcachedx
@@ -147,11 +147,7 @@ class WrappedClient(wrapt.ObjectProxy):
             span_type=SpanTypes.CACHE,
         ) as span:
             span.set_tag(SPAN_MEASURED_KEY)
-            # set analytics sample rate
-            span.set_tag(
-                ANALYTICS_SAMPLE_RATE_KEY,
-                config.pymemcache.get_analytics_sample_rate()
-            )
+            trace_utils.set_analytics_sample_rate(span, config.pymemcache)
 
             # try to set relevant tags, catch any exceptions so we don't mess
             # with the application

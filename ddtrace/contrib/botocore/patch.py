@@ -10,8 +10,8 @@ import botocore.client
 from ddtrace import config
 from ddtrace.vendor import wrapt
 
+from .. import trace_utils
 # project
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import aws
@@ -174,10 +174,6 @@ def patched_api_call(original_func, instance, args, kwargs):
         if 'RequestId' in response_meta:
             span.set_tag('aws.requestid', response_meta['RequestId'])
 
-        # set analytics sample rate
-        span.set_tag(
-            ANALYTICS_SAMPLE_RATE_KEY,
-            config.botocore.get_analytics_sample_rate()
-        )
+        trace_utils.set_analytics_sample_rate(span, config.botocore)
 
         return result

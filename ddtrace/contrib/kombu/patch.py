@@ -4,7 +4,7 @@ import kombu
 from ddtrace.vendor import wrapt
 
 # project
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
+from .. import trace_utils
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import kombu as kombux
@@ -99,11 +99,7 @@ def traced_receive(func, instance, args, kwargs):
 
         s.set_tags(extract_conn_tags(message.channel.connection))
         s.set_tag(kombux.ROUTING_KEY, message.delivery_info['routing_key'])
-        # set analytics sample rate
-        s.set_tag(
-            ANALYTICS_SAMPLE_RATE_KEY,
-            config.kombu.get_analytics_sample_rate()
-        )
+        trace_utils.set_analytics_sample_rate(s, config.kombu)
         return func(*args, **kwargs)
 
 
@@ -122,11 +118,7 @@ def traced_publish(func, instance, args, kwargs):
         s.set_tag(kombux.ROUTING_KEY, get_routing_key_from_args(args))
         s.set_tags(extract_conn_tags(instance.channel.connection))
         s.set_metric(kombux.BODY_LEN, get_body_length_from_args(args))
-        # set analytics sample rate
-        s.set_tag(
-            ANALYTICS_SAMPLE_RATE_KEY,
-            config.kombu.get_analytics_sample_rate()
-        )
+        trace_utils.set_analytics_sample_rate(s, config.kombu)
         # run the command
         propagator.inject(s.context, args[HEADER_POS])
         return func(*args, **kwargs)

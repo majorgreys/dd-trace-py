@@ -4,7 +4,6 @@ from ddtrace import config
 from ddtrace.vendor import wrapt
 
 from .. import trace_utils
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import redis as redisx
@@ -79,8 +78,7 @@ def traced_execute_command(func, instance, args, kwargs):
             s.set_tags(pin.tags)
         s.set_tags(_get_tags(instance))
         s.set_metric(redisx.ARGS_LEN, len(args))
-        # set analytics sample rate if enabled
-        s.set_tag(ANALYTICS_SAMPLE_RATE_KEY, config.redis.get_analytics_sample_rate())
+        trace_utils.set_analytics_sample_rate(s, config.redis)
         # run the command
         return func(*args, **kwargs)
 
@@ -113,8 +111,7 @@ def traced_execute_pipeline(func, instance, args, kwargs):
         s.set_tags(_get_tags(instance))
         s.set_metric(redisx.PIPELINE_LEN, len(instance.command_stack))
 
-        # set analytics sample rate if enabled
-        s.set_tag(ANALYTICS_SAMPLE_RATE_KEY, config.redis.get_analytics_sample_rate())
+        trace_utils.set_analytics_sample_rate(s, config.redis)
 
         return func(*args, **kwargs)
 

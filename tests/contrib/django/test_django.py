@@ -1214,7 +1214,8 @@ def test_analytics_global_on_integration_default(client, test_spans):
             We expect the root span to have the appropriate tag
     """
     with override_global_config(dict(analytics_enabled=True)):
-        assert client.get("/users/").status_code == 200
+        with override_config("django", dict()):
+            assert client.get("/users/").status_code == 200
 
     req_span = test_spans.get_root_span()
     assert req_span.name == "django.request"

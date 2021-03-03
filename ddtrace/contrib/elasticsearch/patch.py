@@ -2,8 +2,8 @@ from importlib import import_module
 
 from ddtrace.vendor.wrapt import wrap_function_wrapper as _w
 
+from .. import trace_utils
 from ...compat import urlencode
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import elasticsearch as metadata
@@ -84,8 +84,7 @@ def _get_perform_request(elasticsearch):
                 span.set_tag(metadata.BODY, instance.serializer.dumps(body))
             status = None
 
-            # set analytics sample rate
-            span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, config.elasticsearch.get_analytics_sample_rate())
+            trace_utils.set_analytics_sample_rate(span, config.elasticsearch)
 
             span = quantize(span)
 

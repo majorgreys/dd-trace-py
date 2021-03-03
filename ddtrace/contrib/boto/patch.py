@@ -5,7 +5,7 @@ import boto.connection
 from ddtrace import config
 from ddtrace.vendor import wrapt
 
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
+from .. import trace_utils
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import aws
@@ -102,11 +102,7 @@ def patched_query_request(original_func, instance, args, kwargs):
         span.set_tag(http.STATUS_CODE, getattr(result, 'status'))
         span.set_tag(http.METHOD, getattr(result, '_method'))
 
-        # set analytics sample rate
-        span.set_tag(
-            ANALYTICS_SAMPLE_RATE_KEY,
-            config.boto.get_analytics_sample_rate()
-        )
+        trace_utils.set_analytics_sample_rate(span, config.boto)
 
         return result
 
@@ -169,11 +165,7 @@ def patched_auth_request(original_func, instance, args, kwargs):
         span.set_tag(http.STATUS_CODE, getattr(result, 'status'))
         span.set_tag(http.METHOD, getattr(result, '_method'))
 
-        # set analytics sample rate
-        span.set_tag(
-            ANALYTICS_SAMPLE_RATE_KEY,
-            config.boto.get_analytics_sample_rate()
-        )
+        trace_utils.set_analytics_sample_rate(span, config.boto)
 
         return result
 

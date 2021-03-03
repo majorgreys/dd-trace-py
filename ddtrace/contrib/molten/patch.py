@@ -7,7 +7,6 @@ from .. import trace_utils
 from ... import Pin
 from ... import config
 from ...compat import urlencode
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...propagation.http import HTTPPropagator
@@ -31,6 +30,7 @@ config._add(
         _default_service="molten",
         app="molten",
         distributed_tracing=asbool(get_env("molten", "distributed_tracing", default=True)),
+        _use_global_config_analytics=True,
     ),
 )
 
@@ -95,8 +95,7 @@ def patch_app_call(wrapped, instance, args, kwargs):
         span_type=SpanTypes.WEB,
     ) as span:
         span.set_tag(SPAN_MEASURED_KEY)
-        # set analytics sample rate with global config enabled
-        span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, config.molten.get_analytics_sample_rate(use_global_config=True))
+        trace_utils.set_analytics_sample_rate(span, config.molten)
 
         @wrapt.function_wrapper
         def _w_start_response(wrapped, instance, args, kwargs):

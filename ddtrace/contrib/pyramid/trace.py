@@ -7,7 +7,6 @@ import ddtrace
 from ddtrace.vendor import wrapt
 
 from .. import trace_utils
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...internal.logger import get_logger
@@ -73,12 +72,9 @@ def trace_tween_factory(handler, registry):
                     tracer.context_provider.activate(context)
             with tracer.trace("pyramid.request", service=service, resource="404", span_type=SpanTypes.WEB) as span:
                 span.set_tag(SPAN_MEASURED_KEY)
-                # Configure trace search sample rate
-                # DEV: pyramid is special case maintains separate configuration from config api
-                analytics_enabled = settings.get(SETTINGS_ANALYTICS_ENABLED)
-
-                if (config.analytics_enabled and analytics_enabled is not False) or analytics_enabled is True:
-                    span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, settings.get(SETTINGS_ANALYTICS_SAMPLE_RATE, True))
+                trace_utils.set_analytics_sample_rate_custom(
+                    span, settings.get(SETTINGS_ANALYTICS_ENABLED), settings.get(SETTINGS_ANALYTICS_SAMPLE_RATE)
+                )
 
                 setattr(request, DD_SPAN, span)  # used to find the tracer in templates
                 response = None

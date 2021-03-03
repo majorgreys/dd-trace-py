@@ -6,7 +6,6 @@ from ddtrace.propagation.http import HTTPPropagator
 
 from .. import trace_utils
 from ...compat import iteritems
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...settings import config
 
@@ -35,8 +34,7 @@ class TraceMiddleware(object):
         )
         span.set_tag(SPAN_MEASURED_KEY)
 
-        # set analytics sample rate with global config enabled
-        span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, config.falcon.get_analytics_sample_rate(use_global_config=True))
+        trace_utils.set_analytics_sample_rate(span, config.falcon)
 
         trace_utils.set_http_meta(
             span, config.falcon, method=req.method, url=req.url, query=req.query_string, request_headers=req.headers

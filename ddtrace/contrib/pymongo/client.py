@@ -9,8 +9,8 @@ import pymongo
 import ddtrace
 from ddtrace.vendor.wrapt import ObjectProxy
 
+from .. import trace_utils
 from ...compat import iteritems
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import mongo as mongox
@@ -110,10 +110,7 @@ class TracedServer(ObjectProxy):
         # set `mongodb.query` tag and resource for span
         _set_query_metadata(span, cmd)
 
-        # set analytics sample rate
-        sample_rate = config.pymongo.get_analytics_sample_rate()
-        if sample_rate is not None:
-            span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, sample_rate)
+        trace_utils.set_analytics_sample_rate(span, config.pymongo)
         return span
 
     # Pymongo >= 3.9
@@ -235,11 +232,7 @@ class TracedSocket(ObjectProxy):
         # set `mongodb.query` tag and resource for span
         _set_query_metadata(s, cmd)
 
-        # set analytics sample rate
-        s.set_tag(
-            ANALYTICS_SAMPLE_RATE_KEY,
-            config.pymongo.get_analytics_sample_rate()
-        )
+        trace_utils.set_analytics_sample_rate(s, config.pymongo)
 
         if self.address:
             set_address_tags(s, self.address)

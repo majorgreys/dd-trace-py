@@ -1,6 +1,6 @@
 from tornado.web import HTTPError
 
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
+from .. import trace_utils
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import http
@@ -42,11 +42,9 @@ def execute(func, handler, args, kwargs):
             span_type=SpanTypes.WEB,
         )
         request_span.set_tag(SPAN_MEASURED_KEY)
-        # set analytics sample rate
-        # DEV: tornado is special case maintains separate configuration from config api
-        analytics_enabled = settings["analytics_enabled"]
-        if (config.analytics_enabled and analytics_enabled is not False) or analytics_enabled is True:
-            request_span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, settings.get("analytics_sample_rate", True))
+        trace_utils.set_analytics_sample_rate_custom(
+            request_span, settings["analytics_enabled"], settings.get("analytics_sample_rate")
+        )
 
         setattr(handler.request, REQUEST_SPAN_KEY, request_span)
 

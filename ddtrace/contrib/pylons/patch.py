@@ -11,6 +11,14 @@ from ...utils.wrappers import unwrap as _u
 from .middleware import PylonsTraceMiddleware
 
 
+config._add(
+    "pylons",
+    dict(
+        _use_global_config_analytics=True,
+    ),
+)
+
+
 def patch():
     """Instrument Pylons applications"""
     if getattr(pylons.wsgiapp, '_datadog_patch', False):

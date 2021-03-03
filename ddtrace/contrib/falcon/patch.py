@@ -9,6 +9,14 @@ from ...utils.formats import get_env
 from .middleware import TraceMiddleware
 
 
+config._add(
+    "falcon",
+    dict(
+        _use_global_config_analytics=True,
+    ),
+)
+
+
 def patch():
     """
     Patch falcon.API to include contrib.falcon.TraceMiddleware

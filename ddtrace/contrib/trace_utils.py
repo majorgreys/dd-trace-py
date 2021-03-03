@@ -3,6 +3,7 @@ This module contains utility functions for writing ddtrace integrations.
 """
 from ddtrace import Pin
 from ddtrace import config
+from ddtrace.constants import ANALYTICS_SAMPLE_RATE_KEY
 from ddtrace.ext import http
 import ddtrace.http
 from ddtrace.internal.logger import get_logger
@@ -190,3 +191,22 @@ def activate_distributed_headers(tracer, int_config, request_headers=None):
         # Only need to activate the new context if something was propagated
         if context.trace_id:
             tracer.context_provider.activate(context)
+
+
+def set_analytics_sample_rate(span, integration_config):
+    analytics_sample_rate = integration_config.analytics_sample_rate
+    if integration_config._is_analytics_enabled():
+        # set rate to True if none set but analytics has been enabled
+        if analytics_sample_rate is None:
+            analytics_sample_rate = True
+        if analytics_sample_rate:
+            span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, analytics_sample_rate)
+
+
+def set_analytics_sample_rate_custom(span, analytics_enabled, analytics_sample_rate):
+    # Used for integrations configuration is not handled by ddtrace.config.<integration>
+    if (config.analytics_enabled and analytics_enabled is not False) or analytics_enabled is True:
+        # set rate to True if none set with analytics enabled
+        if analytics_sample_rate is None:
+            analytics_sample_rate = True
+        span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, analytics_sample_rate)

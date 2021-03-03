@@ -6,7 +6,7 @@ import logging
 
 from flask.ext.cache import Cache
 
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
+from .. import trace_utils
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...settings import config
@@ -50,8 +50,7 @@ def get_traced_cache(ddtracer, service=DEFAULT_SERVICE, meta=None):
             # set span tags
             s.set_tag(CACHE_BACKEND, self.config.get("CACHE_TYPE"))
             s.set_tags(self._datadog_meta)
-            # set analytics sample rate
-            s.set_tag(ANALYTICS_SAMPLE_RATE_KEY, config.flask_cache.get_analytics_sample_rate())
+            trace_utils.set_analytics_sample_rate(s, config.flask_cache)
             # add connection meta if there is one
             if getattr(self.cache, "_client", None):
                 try:

@@ -8,7 +8,7 @@ import ddtrace
 # 3p
 from ddtrace.vendor.wrapt import ObjectProxy
 
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
+from .. import trace_utils
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...ext import memcached
@@ -157,8 +157,4 @@ class TracedClient(ObjectProxy):
             span.set_meta(net.TARGET_HOST, host)
             span.set_meta(net.TARGET_PORT, port)
 
-        # set analytics sample rate
-        span.set_tag(
-            ANALYTICS_SAMPLE_RATE_KEY,
-            config.pylibmc.get_analytics_sample_rate()
-        )
+        trace_utils.set_analytics_sample_rate(span, config.pylibmc)

@@ -7,7 +7,6 @@ from .. import trace_utils
 from ...compat import PY2
 from ...compat import httplib
 from ...compat import parse
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...ext import SpanTypes
 from ...internal.logger import get_logger
 from ...pin import Pin
@@ -130,8 +129,7 @@ def _wrap_putrequest(func, instance, args, kwargs):
         )
         trace_utils.set_http_meta(span, config.httplib, method=method, url=sanitized_url, query=parsed.query)
 
-        # set analytics sample rate
-        span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, config.httplib.get_analytics_sample_rate())
+        trace_utils.set_analytics_sample_rate(span, config.httplib)
     except Exception:
         log.debug("error applying request tags", exc_info=True)
 

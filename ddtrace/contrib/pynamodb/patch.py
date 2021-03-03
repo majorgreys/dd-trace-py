@@ -8,7 +8,6 @@ from ddtrace import config
 from ddtrace.vendor import wrapt
 
 from .. import trace_utils
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...pin import Pin
@@ -23,6 +22,7 @@ config._add(
     "pynamodb",
     {
         "_default_service": "pynamodb",
+        "_use_global_config_analytics": True,
     },
 )
 
@@ -76,11 +76,7 @@ def patched_api_call(original_func, instance, args, kwargs):
         }
         span.set_tags(meta)
 
-        # set analytics sample rate
-        sample_rate = config.pynamodb.get_analytics_sample_rate(use_global_config=True)
-
-        if sample_rate is not None:
-            span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, sample_rate)
+        trace_utils.set_analytics_sample_rate(span, config.pynamodb)
 
         result = original_func(*args, **kwargs)
 

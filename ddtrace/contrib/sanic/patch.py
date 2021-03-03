@@ -4,7 +4,6 @@ import sanic
 
 import ddtrace
 from ddtrace import config
-from ddtrace.constants import ANALYTICS_SAMPLE_RATE_KEY
 from ddtrace.ext import SpanTypes
 from ddtrace.propagation.http import HTTPPropagator
 from ddtrace.utils.wrappers import unwrap as _u
@@ -17,7 +16,7 @@ from ...internal.logger import get_logger
 
 log = get_logger(__name__)
 
-config._add("sanic", dict(_default_service="sanic", distributed_tracing=True))
+config._add("sanic", dict(_default_service="sanic", distributed_tracing=True, _use_global_config_analytics=True))
 
 
 def _wrap_response_callback(span, callback):
@@ -108,9 +107,7 @@ async def patch_handle_request(wrapped, instance, args, kwargs):
         resource=resource,
         span_type=SpanTypes.WEB,
     )
-    sample_rate = config.sanic.get_analytics_sample_rate(use_global_config=True)
-    if sample_rate is not None:
-        span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, sample_rate)
+    trace_utils.set_analytics_sample_rate(span, config.sanic)
 
     method = request.method
     url = "{scheme}://{host}{path}".format(scheme=request.scheme, host=request.host, path=request.path)

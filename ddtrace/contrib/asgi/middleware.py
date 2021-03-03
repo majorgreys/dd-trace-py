@@ -1,7 +1,6 @@
 import sys
 
 import ddtrace
-from ddtrace.constants import ANALYTICS_SAMPLE_RATE_KEY
 from ddtrace.ext import SpanTypes
 from ddtrace.ext import http
 from ddtrace.propagation.http import HTTPPropagator
@@ -17,7 +16,12 @@ log = get_logger(__name__)
 
 config._add(
     "asgi",
-    dict(service_name=config._get_service(default="asgi"), request_span_name="asgi.request", distributed_tracing=True),
+    dict(
+        service_name=config._get_service(default="asgi"),
+        request_span_name="asgi.request",
+        distributed_tracing=True,
+        _use_global_config_analytics=True,
+    ),
 )
 
 ASGI_VERSION = "asgi.version"
@@ -106,9 +110,7 @@ class TraceMiddleware:
         if self.span_modifier:
             self.span_modifier(span, scope)
 
-        sample_rate = self.integration_config.get_analytics_sample_rate(use_global_config=True)
-        if sample_rate is not None:
-            span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, sample_rate)
+        trace_utils.set_analytics_sample_rate(span, self.integration_config)
 
         method = scope.get("method")
         server = scope.get("server")

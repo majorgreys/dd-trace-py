@@ -4,7 +4,7 @@ from ddtrace import Pin
 from ddtrace import config
 
 from . import constants as c
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
+from .. import trace_utils
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...internal.logger import get_logger
@@ -44,10 +44,7 @@ def trace_prerun(*args, **kwargs):
     # propagate the `Span` in the current task Context
     service = config.celery['worker_service_name']
     span = pin.tracer.trace(c.WORKER_ROOT_SPAN, service=service, resource=task.name, span_type=SpanTypes.WORKER)
-    # set analytics sample rate
-    rate = config.celery.get_analytics_sample_rate()
-    if rate is not None:
-        span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, rate)
+    trace_utils.set_analytics_sample_rate(span, config.celery)
 
     span.set_tag(SPAN_MEASURED_KEY)
     attach_span(task, task_id, span)
@@ -100,10 +97,7 @@ def trace_before_publish(*args, **kwargs):
     # in the task_after_publish signal
     service = config.celery['producer_service_name']
     span = pin.tracer.trace(c.PRODUCER_ROOT_SPAN, service=service, resource=task_name)
-    # set analytics sample rate
-    rate = config.celery.get_analytics_sample_rate()
-    if rate is not None:
-        span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, rate)
+    trace_utils.set_analytics_sample_rate(span, config.celery)
 
     span.set_tag(SPAN_MEASURED_KEY)
     span.set_tag(c.TASK_TAG_KEY, c.TASK_APPLY_ASYNC)

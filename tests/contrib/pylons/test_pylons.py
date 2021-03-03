@@ -212,8 +212,9 @@ class PylonsTestCase(TracerTestCase):
                 We expect the root span to have the appropriate tag
         """
         with self.override_global_config(dict(analytics_enabled=True)):
-            res = self.app.get(url_for(controller='root', action='index'))
-            self.assertEqual(res.status, 200)
+            with self.override_config("pylons", dict()):
+                res = self.app.get(url_for(controller='root', action='index'))
+                self.assertEqual(res.status, 200)
 
         self.assert_structure(
             dict(name='pylons.request', metrics={ANALYTICS_SAMPLE_RATE_KEY: 1.0})

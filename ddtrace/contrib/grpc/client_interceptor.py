@@ -10,7 +10,6 @@ from ddtrace.vendor import wrapt
 
 from . import constants
 from .. import trace_utils
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...internal.logger import get_logger
 from ...propagation.http import HTTPPropagator
 from .utils import parse_method_path
@@ -183,9 +182,7 @@ class _ClientInterceptor(
         span._set_str_tag(constants.GRPC_PORT_KEY, self._port)
         span._set_str_tag(constants.GRPC_SPAN_KIND_KEY, constants.GRPC_SPAN_KIND_VALUE_CLIENT)
 
-        sample_rate = config.grpc.get_analytics_sample_rate()
-        if sample_rate is not None:
-            span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, sample_rate)
+        trace_utils.set_analytics_sample_rate(span, config.grpc)
 
         # inject tags from pin
         if self._pin.tags:

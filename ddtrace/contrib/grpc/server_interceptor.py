@@ -7,7 +7,6 @@ from ddtrace.vendor import wrapt
 
 from . import constants
 from .. import trace_utils
-from ...constants import ANALYTICS_SAMPLE_RATE_KEY
 from ...constants import SPAN_MEASURED_KEY
 from ...ext import SpanTypes
 from ...propagation.http import HTTPPropagator
@@ -90,9 +89,7 @@ class _TracedRpcMethodHandler(wrapt.ObjectProxy):
         span._set_str_tag(constants.GRPC_METHOD_KIND_KEY, method_kind)
         span._set_str_tag(constants.GRPC_SPAN_KIND_KEY, constants.GRPC_SPAN_KIND_VALUE_SERVER)
 
-        sample_rate = config.grpc_server.get_analytics_sample_rate()
-        if sample_rate is not None:
-            span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, sample_rate)
+        trace_utils.set_analytics_sample_rate(span, config.grpc_server)
 
         # access server context by taking second argument as server context
         # if not found, skip using context to tag span with server state information

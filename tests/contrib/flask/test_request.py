@@ -107,9 +107,10 @@ class FlaskRequestTestCase(BaseFlaskTestCase):
             return "Hello Flask", 200
 
         with self.override_global_config(dict(analytics_enabled=True)):
-            res = self.client.get("/")
-            self.assertEqual(res.status_code, 200)
-            self.assertEqual(res.data, b"Hello Flask")
+            with self.override_config("flask", dict()):
+                res = self.client.get("/")
+                self.assertEqual(res.status_code, 200)
+                self.assertEqual(res.data, b"Hello Flask")
 
         root = self.get_root_span()
         root.assert_matches(

@@ -13,7 +13,6 @@ import sys
 
 from ddtrace import Pin
 from ddtrace import config
-from ddtrace.constants import ANALYTICS_SAMPLE_RATE_KEY
 from ddtrace.constants import SPAN_MEASURED_KEY
 from ddtrace.contrib import dbapi
 from ddtrace.contrib import func_name
@@ -49,6 +48,7 @@ config._add(
         instrument_middleware=asbool(get_env("django", "instrument_middleware", default=True)),
         instrument_databases=True,
         instrument_caches=True,
+        _use_global_config_analytics=True,
         analytics_enabled=None,  # None allows the value to be overridden by the global config
         analytics_sample_rate=None,
         trace_query_string=None,  # Default to global config
@@ -379,9 +379,7 @@ def traced_get_response(django, pin, func, instance, args, kwargs):
             span_type=SpanTypes.WEB,
         ) as span:
             span.metrics[SPAN_MEASURED_KEY] = 1
-            analytics_sr = config.django.get_analytics_sample_rate(use_global_config=True)
-            if analytics_sr is not None:
-                span.set_tag(ANALYTICS_SAMPLE_RATE_KEY, analytics_sr)
+            trace_utils.set_analytics_sample_rate(span, config.django)
 
             # Not a 404 request
             if resolver_match:

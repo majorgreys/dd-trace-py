@@ -43,17 +43,16 @@ class IntegrationConfig(AttrDict):
         # Set default analytics configuration, default is disabled
         # DEV: Default to `None` which means do not set this key
         # Inject environment variables for integration
-        old_analytics_enabled_env = get_env(name, "analytics_enabled")
-        analytics_enabled_env = os.environ.get(
-            "DD_TRACE_%s_ANALYTICS_ENABLED" % name.upper(), old_analytics_enabled_env
-        )
-        if analytics_enabled_env is not None:
-            analytics_enabled_env = asbool(analytics_enabled_env)
-        self.setdefault("analytics_enabled", analytics_enabled_env)
-        old_analytics_rate = get_env(name, "analytics_sample_rate", default=1.0)
+        old_analytics_enabled = get_env(name, "analytics_enabled")
+        analytics_enabled = os.environ.get("DD_TRACE_%s_ANALYTICS_ENABLED" % name.upper(), old_analytics_enabled)
+        if analytics_enabled is not None:
+            analytics_enabled = asbool(analytics_enabled)
 
-        analytics_rate = os.environ.get("DD_TRACE_%s_ANALYTICS_SAMPLE_RATE" % name.upper(), old_analytics_rate)
-        self.setdefault("analytics_sample_rate", float(analytics_rate))
+        old_analytics_rate = get_env(name, "analytics_sample_rate", default=1.0)
+        analytics_rate = float(os.environ.get("DD_TRACE_%s_ANALYTICS_SAMPLE_RATE" % name.upper(), old_analytics_rate))
+
+        self.setdefault("analytics_enabled", analytics_enabled)
+        self.setdefault("analytics_sample_rate", analytics_rate)
 
         service = get_env(name, "service", default=get_env(name, "service_name", default=None))
         self.setdefault("service", service)
@@ -93,31 +92,14 @@ class IntegrationConfig(AttrDict):
             else self.global_config.header_is_traced(header_name)
         )
 
-    def _is_analytics_enabled(self, use_global_config):
+    def _is_analytics_enabled(self):
+        use_global_config = getattr(self, "_use_global_config_analytics", False)
         # DEV: analytics flag can be None which should not be taken as
         # enabled when global flag is disabled
         if use_global_config and self.global_config.analytics_enabled:
             return self.analytics_enabled is not False
         else:
             return self.analytics_enabled is True
-
-    def get_analytics_sample_rate(self, use_global_config=False):
-        """
-        Returns analytics sample rate but only when integration-specific
-        analytics configuration is enabled with optional override with global
-        configuration
-        """
-        if self._is_analytics_enabled(use_global_config):
-            analytics_sample_rate = getattr(self, "analytics_sample_rate", None)
-            # return True if attribute is None or attribute not found
-            if analytics_sample_rate is None:
-                return True
-            # otherwise return rate
-            return analytics_sample_rate
-
-        # Use `None` as a way to say that it was not defined,
-        #   `False` would mean `0` which is a different thing
-        return None
 
     def __repr__(self):
         cls = self.__class__

@@ -5,12 +5,14 @@ from ddtrace import Pin
 from ddtrace import Tracer
 from ddtrace import config
 from ddtrace.compat import stringify
+from ddtrace.constants import ANALYTICS_SAMPLE_RATE_KEY
 from ddtrace.contrib import trace_utils
 from ddtrace.ext import http
 from ddtrace.propagation.http import HTTP_HEADER_PARENT_ID
 from ddtrace.propagation.http import HTTP_HEADER_TRACE_ID
 from ddtrace.settings import Config
 from tests import DummyTracer
+from tests import override_config
 from tests import override_global_config
 
 
@@ -201,3 +203,66 @@ def test_activate_distributed_headers_no_headers(int_config):
 
     assert context.trace_id is None
     assert context.span_id is None
+
+
+@pytest.mark.parametrize(
+    "global_analytics_enabled,use_global_config_analytics,int_analytics_enabled,int_analytics_sample_rate,expected",
+    [
+        (False, False, None, None, None),
+        (False, True, None, None, None),
+        (False, False, True, 0.5, 0.5),
+        (False, True, True, 0.5, 0.5),
+        (True, False, None, None, None),
+        (True, True, None, None, 1.0),
+        (True, False, False, 1.0, None),
+        (True, True, False, 1.0, None),
+    ],
+)
+def test_set_analytics_sample_rate(
+    span,
+    global_analytics_enabled,
+    use_global_config_analytics,
+    int_analytics_enabled,
+    int_analytics_sample_rate,
+    expected,
+):
+    int_config_options = {}
+    if use_global_config_analytics is not None:
+        int_config_options["_use_global_config_analytics"] = use_global_config_analytics
+    if int_analytics_enabled is not None:
+        int_config_options["analytics_enabled"] = int_analytics_enabled
+    if int_analytics_sample_rate is not None:
+        int_config_options["analytics_sample_rate"] = int_analytics_sample_rate
+    with override_global_config(dict(analytics_enabled=global_analytics_enabled)):
+        with override_config("myint", int_config_options):
+            trace_utils.set_analytics_sample_rate(span, config.myint)
+
+    if expected is None:
+        assert span.get_metric(ANALYTICS_SAMPLE_RATE_KEY) is None
+    else:
+        assert span.get_metric(ANALYTICS_SAMPLE_RATE_KEY) == expected
+
+
+@pytest.mark.parametrize(
+    "global_analytics_enabled,int_analytics_enabled,int_analytics_sample_rate,expected",
+    [
+        (False, None, None, None),
+        (False, True, 0.5, 0.5),
+        (True, None, None, 1.0),
+        (True, False, 1.0, None),
+    ],
+)
+def test_set_analytics_sample_rate_custom(
+    span,
+    global_analytics_enabled,
+    int_analytics_enabled,
+    int_analytics_sample_rate,
+    expected,
+):
+    with override_global_config(dict(analytics_enabled=global_analytics_enabled)):
+        trace_utils.set_analytics_sample_rate_custom(span, int_analytics_enabled, int_analytics_sample_rate)
+
+    if expected is None:
+        assert span.get_metric(ANALYTICS_SAMPLE_RATE_KEY) is None
+    else:
+        assert span.get_metric(ANALYTICS_SAMPLE_RATE_KEY) == expected
