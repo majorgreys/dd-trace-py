@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 
 from paste import fixture
@@ -210,6 +211,10 @@ class PylonsTestCase(TracerTestCase):
     def test_multi_query_string_trace(self):
         with self.override_http_config("pylons", dict(trace_query_string=True)):
             return self.test_success_200("foo=bar&foo=baz&x=y")
+
+    def test_unicode_query_string_trace(self):
+        with self.override_http_config("pylons", dict(trace_query_string=True)):
+            return self.test_success_200(u"foo=🤔")
 
     def test_analytics_global_on_integration_default(self):
         """
