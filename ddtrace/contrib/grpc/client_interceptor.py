@@ -60,14 +60,17 @@ def _future_done_callback(span):
             if response_code != grpc.StatusCode.OK:
                 _handle_error(span, response, status_code)
         finally:
+            log.debug("finishing span:\n%s", span.pprint())
             span.finish()
 
     return func
 
 
 def _handle_response(span, response):
+    log.debug("handling response %s (%s) for span:\n%s", response, type(response), span.pprint())
     if isinstance(response, grpc.Future):
         response.add_done_callback(_future_done_callback(span))
+        log.debug("added done callback")
 
 
 def _handle_error(span, response_error, status_code):
