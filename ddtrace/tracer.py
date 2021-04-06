@@ -675,7 +675,7 @@ class Tracer(object):
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug("writing %s spans (enabled:%s)", len(spans), self.enabled)
             for span in spans:
-                self.log.debug("\n%s", span.pprint())
+                self.log.debug("%s", span.pprint())
 
         if self.enabled and self.writer:
             for filtr in self._filters:

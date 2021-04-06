@@ -1,4 +1,5 @@
 import math
+import json
 import sys
 import traceback
 from typing import Optional, List
@@ -404,7 +405,7 @@ class Span(object):
 
     def pprint(self):
         """ Return a human readable version of the span. """
-        lines = [
+        data = [
             ("name", self.name),
             ("id", self.span_id),
             ("trace_id", self.trace_id),
@@ -416,11 +417,9 @@ class Span(object):
             ("end", "" if not self.duration else self.start + self.duration),
             ("duration", "%fs" % (self.duration or 0)),
             ("error", self.error),
-            ("tags", ""),
+            ("tags", ",".join("%s:%s" % kv for kv in sorted(self.meta.items()))),
         ]
-
-        lines.extend((" ", "%s:%s" % kv) for kv in sorted(self.meta.items()))
-        return "\n".join("%10s %s" % line for line in lines)
+        return json.dumps(dict(data))
 
     @property
     def context(self):

@@ -160,9 +160,9 @@ class Context(object):
                         extra=extra,
                     )
                     for wrong_span in unfinished_spans:
-                        log.debug("\n%s", wrong_span.pprint(), extra=extra)
+                        log.debug("unfinished_span: %s", wrong_span.pprint(), extra=extra)
                     for span in self._trace:
-                        log.debug("\n%s", span.pprint(), extra=extra)
+                        log.debug("%s", span.pprint(), extra=extra)
 
             if self._finished_spans == len(self._trace):
                 # get the trace
