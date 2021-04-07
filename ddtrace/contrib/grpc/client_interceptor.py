@@ -67,6 +67,12 @@ def _future_done_callback(span):
     return func
 
 def _debug_future(future):
+    if not hasattr(future, "_state"):
+        return
+
+    if not isinstance(future._state, grpc._channel._RPCState):
+        return
+
     with future._state.condition:
         log.debug("future: type=%s code=%s callbacks=%s", type(future).__name__, future._state.code, future._state.callbacks)
 
