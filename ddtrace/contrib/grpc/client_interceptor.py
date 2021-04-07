@@ -74,8 +74,10 @@ def _debug_future(future):
 def _handle_response(span, response):
     log.debug("handling_response for span: %s", span.pprint())
     _debug_future(response)
+    # use duck-typing to support future-like response as in the case of
+    # google-api-core which has its own future base class
+    # https://github.com/googleapis/python-api-core/blob/49c6755a21215bbb457b60db91bab098185b77da/google/api_core/future/base.py#L23
     if hasattr(response, "add_done_callback"):
-    # if isinstance(response, grpc.Future):
         response.add_done_callback(_future_done_callback(span))
         log.debug("add_done_callback for span: %s", span.pprint())
         _debug_future(response)
