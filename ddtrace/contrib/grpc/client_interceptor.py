@@ -49,6 +49,7 @@ class _ClientCallDetails(
 
 def _future_done_callback(span):
     def func(response):
+        _debug_future(response)
         try:
             # pull out response code from gRPC response to use both for `grpc.status.code`
             # tag and the error type tag if the response is an exception
@@ -65,12 +66,19 @@ def _future_done_callback(span):
 
     return func
 
+def _debug_future(future):
+    with future._state.condition:
+        log.debug("future: type=%s code=%s callbacks=%s", type(future).__name__, future._state.code, future._state.callbacks)
+
 
 def _handle_response(span, response):
-    log.debug("handling response of type %s for span: %s", type(response).__name__, span.pprint())
-    if isinstance(response, grpc.Future):
+    log.debug("handling_response for span: %s", span.pprint())
+    _debug_future(response)
+    if hasattr(response, "add_done_callback"):
+    # if isinstance(response, grpc.Future):
         response.add_done_callback(_future_done_callback(span))
-        log.debug("added done callback for span: %s", span.pprint())
+        log.debug("add_done_callback for span: %s", span.pprint())
+        _debug_future(response)
 
 
 def _handle_error(span, response_error, status_code):
