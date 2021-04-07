@@ -8,16 +8,27 @@ trace requests as they flow across web servers, databases and microservices.
 This enables developers to have greater visibility into bottlenecks and
 troublesome requests in their application.
 
-Getting Started
----------------
+Requirements
+------------
 
-For a basic product overview: check out the `setup documentation`_.
+Before installing be sure to read through the `setup documentation`_ to ensure
+your environment is ready to receive traces.
 
-For details about developing and contributing: refer to the `development
-guide`_.
 
-For descriptions of the terminology of Datadog APM: take a look at the `official
-documentation`_.
+Installation
+------------
+
+Install with :code:`pip`::
+
+    pip install ddtrace
+
+.. important::
+
+    pip version 18 and above is required to install the library.
+
+    It is strongly suggested to pin the version of the library you deploy.
+
+
 
 
 .. _`Supported Libraries`:
