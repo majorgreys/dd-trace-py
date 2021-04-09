@@ -40,9 +40,6 @@ if TYPE_CHECKING:
     from .tracer import Tracer
 
 
-_MetaKeyType = Union[Text, bytes]
-_MetaDictType = Dict[_MetaKeyType, Text]
-
 log = get_logger(__name__)
 
 
@@ -124,9 +121,9 @@ class Span(object):
         self.span_type = span_type
 
         # tags / metadata
-        self.meta = {}  # type: _MetaDictType
+        self.meta = {}  # type: Dict[Union[Text, bytes], Text]
         self.error = 0
-        self.metrics = {}  # type: Dict[str, Any]
+        self.metrics = {}  # type: Dict[Union[Text, bytes], Union[float, int]]
 
         # timing
         self.start_ns = time_ns() if start is None else int(start * 1e9)
@@ -229,7 +226,7 @@ class Span(object):
             cb(self)
 
     def set_tag(self, key, value=None):
-        # type: (_MetaKeyType, Any) -> None
+        # type: (Union[Text, bytes], Any) -> None
         """Set a tag key/value pair on the span.
 
         Keys must be strings, values must be ``stringify``-able.
@@ -311,7 +308,7 @@ class Span(object):
             log.warning("error setting tag %s, ignoring it", key, exc_info=True)
 
     def _set_str_tag(self, key, value):
-        # type: (_MetaKeyType, Text) -> None
+        # type: (Union[Text, bytes], Text) -> None
         """Set a value for a tag. Values are coerced to unicode in Python 2 and
         str in Python 3, with decoding errors in conversion being replaced with
         U+FFFD.
@@ -324,12 +321,12 @@ class Span(object):
             del self.meta[key]
 
     def get_tag(self, key):
-        # type: (_MetaKeyType) -> Optional[Text]
+        # type: (Union[Text, bytes]) -> Optional[Text]
         """Return the given tag or None if it doesn't exist."""
         return self.meta.get(key, None)
 
     def set_tags(self, tags):
-        # type: (_MetaDictType) -> None
+        # type: (Dict[Union[Text, bytes], Text]) -> None
         """Set a dictionary of tags on the given span. Keys and values
         must be strings (or stringable)
         """
@@ -338,15 +335,15 @@ class Span(object):
                 self.set_tag(k, v)
 
     def set_meta(self, k, v):
-        # type: (_MetaKeyType, Text) -> None
+        # type: (Union[Text, bytes], Text) -> None
         self.set_tag(k, v)
 
     def set_metas(self, kvs):
-        # type: (_MetaDictType) -> None
+        # type: (Dict[Union[Text, bytes], Text]) -> None
         self.set_tags(kvs)
 
     def set_metric(self, key, value):
-        # type: (str, Any) -> None
+        # type: (Union[Text, bytes], Union[float, int]) -> None
         # This method sets a numeric tag value for the given key. It acts
         # like `set_meta()` and it simply add a tag without further processing.
 
@@ -379,7 +376,7 @@ class Span(object):
         self.metrics[key] = value
 
     def set_metrics(self, metrics):
-        # type: (Dict[str, Any]) -> None
+        # type: (Dict[Union[Text, bytes], Union[float, int]]) -> None
         if metrics:
             for k, v in iteritems(metrics):
                 self.set_metric(k, v)
