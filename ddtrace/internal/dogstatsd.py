@@ -5,8 +5,18 @@ from ddtrace.vendor.dogstatsd import DogStatsd
 from ddtrace.vendor.dogstatsd import base
 
 
+class nullcontext():
+    def __enter__(self):
+        pass
+
+    def __exit__(self, *excinfo):
+        pass
+
+
 def get_dogstatsd_client(url):
     # type: (str) -> Optional[DogStatsd]
+    # DEBUG: skip creating socket
+    return nullcontext()
     if not url:
         return None
 

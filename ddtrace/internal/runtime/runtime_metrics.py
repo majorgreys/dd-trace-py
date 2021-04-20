@@ -74,14 +74,14 @@ class RuntimeWorker(periodic.PeriodicService):
         with self._dogstatsd_client:
             for key, value in self._runtime_metrics:
                 log.debug("Writing metric %s:%s", key, value)
-                self._dogstatsd_client.gauge(key, value)
+                # self._dogstatsd_client.gauge(key, value)
 
     def update_runtime_tags(self):
         # type: () -> None
         # DEV: ddstatsd expects tags in the form ['key1:value1', 'key2:value2', ...]
         tags = ["{}:{}".format(k, v) for k, v in RuntimeTags()]
         log.debug("Updating constant tags %s", tags)
-        self._dogstatsd_client.constant_tags = tags
+        # self._dogstatsd_client.constant_tags = tags
 
     periodic = flush
     on_shutdown = flush
