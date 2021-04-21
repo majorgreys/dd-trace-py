@@ -39,8 +39,9 @@ class PeriodicThread(threading.Thread):
         self._target = target
         self._on_shutdown = on_shutdown
         self.interval = interval
-        self.quit = threading.Event()
+        self._lock = threading.Lock()
         self.daemon = True
+        self._lock.acquire()
 
     def stop(self):
         """Stop the thread."""
@@ -49,11 +50,11 @@ class PeriodicThread(threading.Thread):
         # 2. if we're a child trying to stop a Thread,
         #    the Lock might have been locked in a parent process while forking so that'd block forever
         if self.is_alive():
-            self.quit.set()
+            self._lock.release()
 
     def run(self):
         """Run the target function periodically."""
-        while not self.quit.wait(self.interval):
+        with not self._lock.acquire(timeout=self.interval):
             self._target()
         if self._on_shutdown is not None:
             self._on_shutdown()
