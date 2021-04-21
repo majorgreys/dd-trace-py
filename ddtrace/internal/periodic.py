@@ -1,4 +1,5 @@
 # -*- encoding: utf-8 -*-
+import logging
 import sys
 import threading
 import time
@@ -9,6 +10,8 @@ import attr
 from ddtrace.internal import nogevent
 from ddtrace.internal import service
 
+
+log = logging.getLogger(__name__)
 
 class PeriodicThread(threading.Thread):
     """Periodic thread.
@@ -41,6 +44,11 @@ class PeriodicThread(threading.Thread):
         self.interval = interval
         self.quit = threading.Event()
         self.daemon = True
+
+    def _reset_internal_locks(self):
+        log.debug("calling _reset_internal_locks")
+        super(PeriodicThread, self)._reset_internal_locks()
+        log.debug("called _reset_internal_locks")
 
     def stop(self):
         """Stop the thread."""
