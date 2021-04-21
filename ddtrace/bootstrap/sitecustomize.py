@@ -5,7 +5,11 @@ Add all monkey-patching that needs to run by default here
 import logging
 import os
 import sys
+import faulthandler
 
+
+# dump traceback if thread blocked for timeout
+faulthandler.dump_traceback_later(15)
 
 # Perform gevent patching as early as possible in the application before
 # importing more of the library internals.
