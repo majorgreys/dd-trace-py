@@ -53,7 +53,11 @@ class PeriodicThread(threading.Thread):
 
     def run(self):
         """Run the target function periodically."""
-        import time; time.sleep(5)
+        print("entering busy loop for %r" % self)
+        current_time = time.time()
+        while (time.time() < current_time+5):
+            pass
+        print("finished busy loop")
         while not self.quit.wait(self.interval):
             self._target()
         if self._on_shutdown is not None:
