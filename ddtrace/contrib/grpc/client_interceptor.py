@@ -118,6 +118,8 @@ class _WrappedResponseCallFuture(wrapt.ObjectProxy):
     def __init__(self, wrapped, span):
         super(_WrappedResponseCallFuture, self).__init__(wrapped)
         self._span = span
+        # ensure span is closed by adding _future_done_callback
+        _handle_response(self._span, self.__wrapped__)
 
     def __iter__(self):
         return self
@@ -133,8 +135,6 @@ class _WrappedResponseCallFuture(wrapt.ObjectProxy):
         try:
             return next(self.__wrapped__)
         except StopIteration:
-            # at end of iteration handle response status from wrapped future
-            _handle_response(self._span, self.__wrapped__)
             raise
         except grpc.RpcError as rpc_error:
             # DEV: grpcio<1.18.0 grpc.RpcError is raised rather than returned as response
