@@ -55,7 +55,7 @@ class Span(object):
         # Public span attributes
         "service",
         "name",
-        "resource",
+        "_resource",
         "span_id",
         "trace_id",
         "parent_id",
@@ -122,6 +122,7 @@ class Span(object):
         # required span info
         self.name = name
         self.service = service
+        self._resource = None
         self.resource = resource or name
         self._span_type = None
         self.span_type = span_type
@@ -166,6 +167,17 @@ class Span(object):
     def start(self, value):
         # type: (Union[int, float]) -> None
         self.start_ns = int(value * 1e9)
+
+    @property
+    def resource(self):
+        return self._resource
+
+    @resource.setter
+    def resource(self, value):
+        if value is None:
+            return
+        # self._resource = ensure_text(value, errors="replace")
+        self._resource = value
 
     @property
     def span_type(self):

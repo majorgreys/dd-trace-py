@@ -283,6 +283,18 @@ class PsycopgCore(TracerTestCase):
 
     @snapshot()
     @skipIf(PSYCOPG2_VERSION < (2, 7), "SQL string composition not available in psycopg2<2.7")
+    def test_unicode_query_encoding(self):
+        """Checks whether execution of composed SQL string is traced"""
+        conn = psycopg2.connect(**POSTGRES_CONFIG)
+
+        with conn.cursor() as cur:
+            cur.execute(u"""select '😌'""")
+            rows = cur.fetchall()
+            assert len(rows) == 1, rows
+            assert rows[0][0] == "one"
+
+    @snapshot()
+    @skipIf(PSYCOPG2_VERSION < (2, 7), "SQL string composition not available in psycopg2<2.7")
     def test_composed_query_encoding(self):
         """Checks whether execution of composed SQL string is traced"""
         import logging

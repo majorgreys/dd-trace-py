@@ -220,6 +220,12 @@ class SpanTestCase(TracerTestCase):
         else:
             assert 0, "should have failed"
 
+    def test_resource_unicode(self):
+        s = Span(tracer=None, name="test.span", resource=u"😌")
+        assert s.resource == u"😌"
+        s = Span(tracer=None, name="test.span", resource=u"/?foo=bar&baz=정상처리".encode("euc-kr"))
+        assert s.resource == u"/?foo=bar&baz=����ó��"
+
     def test_span_type(self):
         s = Span(tracer=None, name="test.span", service="s", resource="r", span_type=SpanTypes.WEB)
         s.set_tag("a", "1")
