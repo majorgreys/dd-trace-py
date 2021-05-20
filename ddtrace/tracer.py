@@ -60,6 +60,7 @@ log = get_logger(__name__)
 
 debug_mode = asbool(get_env("trace", "debug", default=False))
 
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] [%(process)s:%(thread)s]- %(message)s")
 DD_LOG_FORMAT = "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] {}- %(message)s".format(
     "[dd.service=%(dd.service)s dd.env=%(dd.env)s dd.version=%(dd.version)s"
     " dd.trace_id=%(dd.trace_id)s dd.span_id=%(dd.span_id)s] "
