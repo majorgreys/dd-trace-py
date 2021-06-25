@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+import itertools
+import pickle
+import random
+import string
+
+from ddtrace.span import Span
+
+
+def rands(size=6, chars=string.ascii_uppercase + string.digits):
+    return "".join(random.choice(chars) for _ in range(size))
+
+
+# number of traces
+NTRACES = [1]
+
+# number of spans in a trace
+NSPANS = [64, 1024]
+
+# number of tags in a span
+# make sure to test if no tags as encoder can skip packing empty dict
+NTAGS = [0, 1, 16]
+
+# length of tag values in a span
+LTAGS = [16, 256]
+
+# number of metrics in a span
+# make sure to test if no metrics as encoder can skip packing empty dict
+NMETRICS = [0, 1, 16]
+
+# set of randomly generated span attributes to be used in traces
+SPAN_NAMES = [rands(size=16) for _ in range(256)]
+RESOURCES = [rands(size=16) for _ in range(256)]
+SERVICES = [rands(size=16) for _ in range(16)]
+TAG_KEYS = [rands(size=16) for _ in range(256)]
+METRIC_KEYS = [rands(size=16) for _ in range(256)]
+
+
+def gen_traces(ntraces, nspans, ntags, ltags, nmetrics):
+    traces = []
+    print(f"Generating ntraces={ntraces} nspans={nspans} ntags={ntags} ltags={ltags} nmetrics={nmetrics}")
+    for _ in range(ntraces):
+        trace = []
+        tag_values = [rands(size=ltags) for _ in range(ntags)]
+        for i in range(0, nspans):
+            # first span is root so has no parent otherwise parent is root span
+            parent_id = trace[0].span_id if i > 0 else None
+            span_name = random.sample(SPAN_NAMES, 1)[0]
+            resource = random.sample(RESOURCES, 1)[0]
+            service = random.sample(SERVICES, 1)[0]
+            tag_keys = random.sample(TAG_KEYS, ntags)
+            with Span(None, span_name, resource=resource, service=service, parent_id=parent_id) as span:
+                if ntags > 0:
+                    span.set_tags(dict(zip(random.sample(TAG_KEYS, ntags), random.sample(tag_values, ntags))))
+                if nmetrics > 0:
+                    span.set_metrics(
+                        dict(
+                            zip(
+                                random.sample(METRIC_KEYS, nmetrics),
+                                [random.randint(0, 2 ** 16) for _ in range(nmetrics)],
+                            )
+                        )
+                    )
+                trace.append(span)
+        traces.append(trace)
+    return traces
+
+
+VARIANTS = {
+    "ntraces{}_nspans{}_ntags{}_ltags{}_nmetrics{}".format(ntraces, nspans, ntags, ltags, nmetrics): gen_traces(
+        ntraces=ntraces, nspans=nspans, ntags=ntags, ltags=ltags, nmetrics=nmetrics
+    )
+    for (ntraces, nspans, ntags, ltags, nmetrics) in itertools.product(NTRACES, NSPANS, NTAGS, LTAGS, NMETRICS)
+}
+
+# pickle the data to be loaded in each benchmark run to control for data generation
+with open("variants.pickle", "wb") as f:
+    pickle.dump(VARIANTS, f)
+
+# generate the sirun template file as it does not support paramaterization in
+# the way we are handling here
+with open("meta.yaml", "w") as f:
+    f.write("""
+name: encoder
+iterations: 10
+run: ./run
+variants:
+    """.strip())
+    for variant in VARIANTS:
+        f.write(f"\n  {variant}:\n    run: ./run {variant}")

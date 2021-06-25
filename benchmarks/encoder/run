@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+
+import pickle
+import re
+import sys
+
+from datadog import initialize
+from datadog import statsd
+
+from ddtrace.internal.encoding import MsgpackEncoder
+
+
+def encode_trace(encoder, trace, variant):
+    encoder.encode_trace(trace)
+
+
+def run(variant):
+    print(f"Running {variant}")
+    initialize(statsd_host="localhost", statsd_port=8125)
+    with open("variants.pickle", "rb") as f:
+        variants = pickle.load(f)
+        # pre-generating many traces isn't feasible
+        # we need sirun to ignore resources during generation
+        trace = variants[variant][0]
+    encoder = MsgpackEncoder()
+    # tagging the metric here would be useful later on for analysis of durations
+    # by the variants of trace data
+    # FIXME: sirun ignores statsd tags
+    m = re.compile(r"([a-z]+)([0-9]+)")
+    tags = ["{}:{}".format(*m.match(v).groups()) for v in variant.split("_")]
+    with statsd.timed("encode_1000_trace_duration", tags=tags):
+        for _ in range(1000):
+            encode_trace(encoder, trace, variant)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        sys.exit(1)
+
+    run(sys.argv[1])
