@@ -9,8 +9,4 @@ mkdir -p /artifacts/output/
 # cleanup any existing output artifacts
 rm -f /artifacts/output/*.*
 
-/app/bootstrap
-sirun meta.yaml | tee /artifacts/output/sirun.ndjson
-# FIXME: jq: error (at /artifacts/output/sirun.ndjson:16): null (null) and number (0) cannot be subtracted
-# jq -s -f summarize_sirun.jq /artifacts/output/sirun.ndjson | tee /artifacts/output/summary_sirun.json
-cat /artifacts/output/sirun.ndjson | sirun --summarize | tee /artifacts/output/summary_sirun.json
+pytest --benchmark-json=/artifacts/output/encoder.json

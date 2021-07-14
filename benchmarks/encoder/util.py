@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-import itertools
-import pickle
 import random
 import string
 
@@ -11,23 +8,6 @@ def rands(size=6, chars=string.ascii_uppercase + string.digits):
     return "".join(random.choice(chars) for _ in range(size))
 
 
-# number of traces
-NTRACES = [1]
-
-# number of spans in a trace
-NSPANS = [64, 1024]
-
-# number of tags in a span
-# make sure to test if no tags as encoder can skip packing empty dict
-NTAGS = [0, 1, 16]
-
-# length of tag values in a span
-LTAGS = [16, 256]
-
-# number of metrics in a span
-# make sure to test if no metrics as encoder can skip packing empty dict
-NMETRICS = [0, 1, 16]
-
 # set of randomly generated span attributes to be used in traces
 SPAN_NAMES = [rands(size=16) for _ in range(256)]
 RESOURCES = [rands(size=16) for _ in range(256)]
@@ -36,9 +16,8 @@ TAG_KEYS = [rands(size=16) for _ in range(256)]
 METRIC_KEYS = [rands(size=16) for _ in range(256)]
 
 
-def gen_traces(ntraces, nspans, ntags, ltags, nmetrics):
+def gen_traces(ntraces=1, nspans=1, ntags=0, ltags=0, nmetrics=0):
     traces = []
-    print(f"Generating ntraces={ntraces} nspans={nspans} ntags={ntags} ltags={ltags} nmetrics={nmetrics}")
     for _ in range(ntraces):
         trace = []
         tag_values = [rands(size=ltags) for _ in range(ntags)]
@@ -64,27 +43,3 @@ def gen_traces(ntraces, nspans, ntags, ltags, nmetrics):
                 trace.append(span)
         traces.append(trace)
     return traces
-
-
-VARIANTS = {
-    "ntraces{}_nspans{}_ntags{}_ltags{}_nmetrics{}".format(ntraces, nspans, ntags, ltags, nmetrics): gen_traces(
-        ntraces=ntraces, nspans=nspans, ntags=ntags, ltags=ltags, nmetrics=nmetrics
-    )
-    for (ntraces, nspans, ntags, ltags, nmetrics) in itertools.product(NTRACES, NSPANS, NTAGS, LTAGS, NMETRICS)
-}
-
-# pickle the data to be loaded in each benchmark run to control for data generation
-with open("variants.pickle", "wb") as f:
-    pickle.dump(VARIANTS, f)
-
-# generate the sirun template file as it does not support paramaterization in
-# the way we are handling here
-with open("meta.yaml", "w") as f:
-    f.write("""
-name: encoder
-iterations: 10
-run: ./run
-variants:
-    """.strip())
-    for variant in VARIANTS:
-        f.write(f"\n  {variant}:\n    run: ./run {variant}")
